@@ -1,0 +1,598 @@
+<p align="center">
+    <img src="logo.png" alt="NexusMC Logo" width="400"/>
+</p>
+
+# NexusMC API 文档（非官方）
+
+本文档基于实际抓取的 API 响应整理而成，所有端点均返回 JSON 格式（除 RSS 外）。  
+> 🚧 **非官方文档**：本 API 文档基于对 [NexusMC](https://nexusmc.cn) 网站实际网络请求的抓包整理而成(除了RSS)，**并非官方发布**，可能随时因网站更新而失效。请合理使用，勿对目标服务器造成过大负担。
+
+> 🚧 **禁止爬虫恶意使用**：NexusMC在其[robots.txt](https://nexusmc.cn/robots.txt)中 禁止爬虫访问 /admin/ /api/ /settings/ messages/ /search?* /user/me/ 
+
+
+## 简介 
+
+[NexusMC](https://nexusmc.cn/) 是一个 Minecraft 资源分享社区，本站点提供资源下载、论坛交流等功能。此文档整理了 NexusMC 公开 API 的调用方式、参数和返回结构，旨在帮助开发者了解其数据接口，方便二次开发或学习交流。
+
+---
+
+## 目录
+1. [RSS 订阅源](#1-rss-订阅源)
+2. [资源详情](#2-资源详情)
+3. [资源列表](#3-资源列表)
+4. [帖子回复](#4-帖子回复)
+5. [帖子列表](#5-帖子列表)
+6. [用户信息与徽章](#6-用户信息与徽章)
+7. [用户活跃度](#7-用户活跃度)
+8. [全局搜索](#8-全局搜索)
+9. [论坛板块列表](#9-论坛板块列表)
+10. [站点设置](#10-站点设置)
+
+
+---
+
+## 1. RSS 订阅源
+获取全站最新动态（资源发布、论坛帖子、更新日志等），返回标准的 RSS 2.0 XML。
+
+- **端点**: `/api/rss`
+- **方法**: `GET`
+- **参数**: 无
+- **返回**: `application/rss+xml`
+
+**返回结构**：标准的 RSS 2.0 XML，包含 `<channel>` 和多个 `<item>`。每个 `<item>` 包含标题、链接、发布时间、作者、分类和描述。
+
+**示例**：见 [https://nexusmc.cn/api/rss](https://nexusmc.cn/api/rss)
+
+---
+
+## 2. 资源详情
+获取单个资源的详细信息。
+
+- **端点**: `/api/resources/{resourceId}`
+- **方法**: `GET`
+- **路径参数**:  
+  - `resourceId`: 资源的 UUID（例如 `2309820f-4f87-4ac2-8800-57af8b38e78c`）
+- **返回**: `application/json`
+
+**返回字段说明**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `id` | string | 资源UUID |
+| `title` | string | 标题 |
+| `description` | string | 简短描述 |
+| `content` | string | 详细介绍（ProseMirror JSON 字符串，需解析） |
+| `authorId` | string | 作者用户ID |
+| `author` | object | 作者信息（包含 `id`, `username`, `avatar`） |
+| `platform` | string | 平台：`java` / `bedrock` / `universal` |
+| `category` | string | 分类，如 `plugin_config`、`plugin`、`texture`、`utility`、`launcher` |
+| `subCategory` | string or null | 子分类（可能为JSON数组或null） |
+| `sideSupport` | string | 支持端：`both` 等 |
+| `mcVersions` | string | JSON数组，支持的MC版本，如 `["通用"]` 或 `["1.21.11","1.21.10"]` |
+| `tags` | string | JSON数组，标签，如 `["数据同步","跨服务器"]` |
+| `coverImage` | string or null | 封面图片路径（相对路径，需拼接基础URL） |
+| `downloadCount` | int | 下载次数 |
+| `views` | int | 浏览次数 |
+| `likeCount` | int | 点赞数 |
+| `favoriteCount` | int | 收藏数 |
+| `downloadType` | string | 下载类型：`external`（外部链接）或 `file`（本站文件） |
+| `fileUrl` | string | 下载链接（若为外部链接则为URL，否则为文件路径） |
+| `fileSize` | int | 文件大小（字节），若无则为0 |
+| `fileName` | string | 文件名（若有） |
+| `version` | string | 资源版本号 |
+| `gallery` | string | JSON数组，画廊图片URL列表 |
+| `sourceType` | string | 来源类型：`closed` 等 |
+| `repositoryUrl` | string or null | 代码仓库URL（若有） |
+| `isRecommended` | boolean | 是否推荐 |
+| `status` | string | 状态：`approved` 等 |
+| `rejectReason` | string or null | 拒绝原因（若被拒绝） |
+| `createdAt` | string | ISO 8601 时间戳 |
+| `updatedAt` | string | ISO 8601 时间戳 |
+
+**示例**（截取关键部分）：
+```json
+{
+  "id": "2309820f-4f87-4ac2-8800-57af8b38e78c",
+  "title": "Zenith插件包",
+  "description": "一个MCPE插件包，适合新手开服",
+  "content": "{\"type\":\"doc\",\"content\":[...]}",
+  "authorId": "43d177bc-4ef6-448b-ae71-6798555823d9",
+  "author": {
+    "id": "43d177bc-4ef6-448b-ae71-6798555823d9",
+    "username": "XIaoao5297",
+    "avatar": "/avatars/default.png"
+  },
+  "platform": "universal",
+  "category": "plugin_config",
+  "subCategory": null,
+  "sideSupport": "both",
+  "mcVersions": "[\"通用\"]",
+  "tags": "[]",
+  "coverImage": "/uploads/images/yHruzfcZtnMa7_VAHzC-1.webp",
+  "downloadCount": 4,
+  "views": 57,
+  "likeCount": 0,
+  "favoriteCount": 0,
+  "downloadType": "external",
+  "fileUrl": "https://github.com/Xiaoao5297/Zenith-Core/releases",
+  "fileSize": 0,
+  "fileName": "",
+  "version": "1.9.10",
+  "gallery": "[\"https://nexusmc.cn/uploads/images/MLDkPEYYw-hDXWaWbEfe_.webp\",\"https://img.shields.io/badge/License-MIT-blue.svg\",\"https://img.shields.io/badge/Download-1.9.9-orange.svg\"]",
+  "sourceType": "closed",
+  "repositoryUrl": null,
+  "isRecommended": false,
+  "status": "approved",
+  "rejectReason": null,
+  "createdAt": "2026-03-03T01:23:12.276Z",
+  "updatedAt": "2026-03-03T11:14:43.268Z"
+}
+```
+
+---
+
+## 3. 资源列表
+获取资源列表，支持分页。
+
+- **端点**: `/api/resources`
+- **方法**: `GET`
+- **查询参数**（推测）:
+  - `page`: 页码（默认1）
+  - `pageSize`: 每页数量（默认40）
+  - 可能支持平台、分类等筛选（未验证）
+- **返回**: `application/json`
+
+**返回结构**：
+
+```json
+{
+  "resources": [
+    {
+      "id": "string",
+      "title": "string",
+      "description": "string",
+      "authorId": "string",
+      "platform": "string",
+      "category": "string",
+      "subCategory": "string or null",
+      "sideSupport": "string",
+      "mcVersions": "string (JSON array)",
+      "tags": "string (JSON array)",
+      "coverImage": "string or null",
+      "downloadCount": "int",
+      "views": "int",
+      "likeCount": "int",
+      "favoriteCount": "int",
+      "version": "string",
+      "status": "string",
+      "isRecommended": "boolean",
+      "createdAt": "string (ISO 8601)",
+      "updatedAt": "string (ISO 8601)",
+      "author": {
+        "id": "string",
+        "username": "string",
+        "avatar": "string"
+      }
+    }
+  ],
+  "pagination": {
+    "page": "int",
+    "pageSize": "int",
+    "total": "int",
+    "totalPages": "int"
+  }
+}
+```
+
+**字段说明**：
+- `resources` 数组中的每个元素与资源详情接口的元数据部分一致（不含 `content`、`downloadType`、`fileUrl` 等详细字段）。
+- `pagination` 包含分页信息。
+
+**示例**：见 [https://nexusmc.cn/api/resources](https://nexusmc.cn/api/resources)
+
+---
+
+## 4. 帖子回复
+获取某个论坛帖子的回复列表（包含嵌套回复）。
+
+- **端点**: `/api/posts/{postId}/replies`
+- **方法**: `GET`
+- **路径参数**:  
+  - `postId`: 帖子的 UUID（例如 `e20e89b1-1e3b-44e2-91e1-64da4452cb2b`）
+- **查询参数**:
+  - `page`: 页码（默认1）
+  - `pageSize`: 每页数量（默认20）
+- **返回**: `application/json`
+
+**返回结构**：
+
+```json
+{
+  "replies": [
+    {
+      "id": "string",
+      "content": "string (ProseMirror JSON)",
+      "postId": "string",
+      "parentId": "string or null",
+      "replyToUserId": "string or null",
+      "replyToUsername": "string or null",
+      "floorNumber": "int",
+      "createdAt": "string (ISO 8601)",
+      "updatedAt": "string (ISO 8601)",
+      "author": {
+        "id": "string",
+        "username": "string",
+        "avatar": "string",
+        "role": "string",
+        "status": "string",
+        "contribution": "int"
+      },
+      "replies": [ ... ]  // 子回复数组，结构与父回复相同
+    }
+  ],
+  "pagination": {
+    "page": "int",
+    "pageSize": "int",
+    "total": "int",
+    "totalPages": "int"
+  }
+}
+```
+
+**字段说明**：
+- `replies` 数组：每个元素为一条回复，可嵌套 `replies` 表示子回复。
+- `content`：回复内容，ProseMirror JSON 字符串，需解析。
+- `parentId`：若为子回复，则为父回复ID。
+- `replyToUserId`/`replyToUsername`：被回复的用户信息。
+- `author`：作者信息，包含 `role`（用户角色）、`status`（状态）、`contribution`（贡献值）。
+
+**示例**：见 [https://nexusmc.cn/api/posts/e20e89b1-1e3b-44e2-91e1-64da4452cb2b/replies?page=1](https://nexusmc.cn/api/posts/e20e89b1-1e3b-44e2-91e1-64da4452cb2b/replies?page=1)
+
+---
+
+## 5. 帖子列表
+获取论坛帖子列表，支持分页。
+
+- **端点**: `/api/posts`
+- **方法**: `GET`
+- **查询参数**（推测）:
+  - `page`: 页码（默认1）
+  - `pageSize`: 每页数量（默认20）
+  - 可能支持按板块筛选（未验证）
+- **返回**: `application/json`
+
+**返回结构**：
+
+```json
+{
+  "posts": [
+    {
+      "id": "string",
+      "title": "string",
+      "authorId": "string",
+      "boardId": "string",
+      "views": "int",
+      "likeCount": "int",
+      "favoriteCount": "int",
+      "isPinned": "boolean",
+      "isLocked": "boolean",
+      "isHighlighted": "boolean",
+      "status": "string",
+      "copyrightEnabled": "boolean",
+      "copyrightLicense": "string or null",
+      "lastReplyAt": "string (ISO 8601)",
+      "createdAt": "string (ISO 8601)",
+      "updatedAt": "string (ISO 8601)",
+      "author": {
+        "id": "string",
+        "username": "string",
+        "avatar": "string"
+      },
+      "board": {
+        "id": "string",
+        "name": "string",
+        "description": "string",
+        "icon": "string",
+        "color": "string",
+        "rules": "string",
+        "sortOrder": "int",
+        "postCount": "int",
+        "createdAt": "string (ISO 8601)",
+        "updatedAt": "string (ISO 8601)"
+      },
+      "_count": {
+        "replies": "int"
+      }
+    }
+  ],
+  "pagination": {
+    "page": "int",
+    "pageSize": "int",
+    "total": "int",
+    "totalPages": "int"
+  }
+}
+```
+
+**字段说明**：
+- `posts` 数组：每个元素为一个帖子。
+- `isPinned`：是否置顶；`isLocked`：是否锁定；`isHighlighted`：是否高亮。
+- `status`：帖子状态，如 `approved`。
+- `copyrightEnabled`：是否启用版权声明；`copyrightLicense`：版权许可证。
+- `lastReplyAt`：最后回复时间。
+- `author`：作者信息。
+- `board`：所属板块信息（与 `/api/posts/boards` 返回的板块对象一致）。
+- `_count.replies`：回复数量。
+
+**示例**：见 [https://nexusmc.cn/api/posts](https://nexusmc.cn/api/posts)
+
+---
+
+## 6. 用户信息与徽章
+获取用户的详细信息以及获得的徽章列表。
+
+- **端点**: `/api/users/{userId}`
+- **方法**: `GET`
+- **路径参数**:  
+  - `userId`: 用户的 UUID（例如 `e83753f6-6610-4cef-aab1-17dab7083589`）
+- **返回**: `application/json`（直接返回徽章数组）
+
+**返回结构**（数组）：
+
+```json
+[
+  {
+    "id": "string",
+    "key": "string",
+    "name": "string",
+    "description": "string",
+    "icon": "string",
+    "color": "string",
+    "category": "string",
+    "condition": "string (JSON)",
+    "sortOrder": "int",
+    "createdAt": "string (ISO 8601)",
+    "earnedAt": "string (ISO 8601)"
+  },
+  ...
+]
+```
+
+**字段说明**：
+- `id`：徽章ID。
+- `key`：徽章唯一标识。
+- `name`：徽章名称。
+- `description`：徽章描述。
+- `icon`：图标（可能是 emoji 或图标标识）。
+- `color`：颜色代码（十六进制）。
+- `category`：分类，如 `special`、`social`、`milestone`。
+- `condition`：获取条件（JSON 字符串）。
+- `sortOrder`：排序顺序。
+- `createdAt`：徽章创建时间。
+- `earnedAt`：用户获得该徽章的时间。
+
+**注意**：此端点**不包含**用户的基本信息（如用户名、头像），需从其他接口获取。
+
+**示例**：见 [https://nexusmc.cn/api/users/e83753f6-6610-4cef-aab1-17dab7083589](https://nexusmc.cn/api/users/e83753f6-6610-4cef-aab1-17dab7083589)
+
+---
+
+## 7. 用户活跃度
+获取用户在某一年内的活跃度数据（发帖/回复数量按天统计）。
+
+- **端点**: `/api/users/{userId}/activity`
+- **方法**: `GET`
+- **路径参数**:  
+  - `userId`: 用户的 UUID
+- **查询参数**:
+  - `year`: 年份，例如 `2026`
+- **返回**: `application/json`
+
+**返回结构**：
+
+```json
+{
+  "year": "int",
+  "total": "int",
+  "counts": {
+    "YYYY-MM-DD": "int",
+    ...
+  }
+}
+```
+
+**字段说明**：
+- `year`：查询年份。
+- `total`：该年总活跃天数。
+- `counts`：对象，键为日期（`YYYY-MM-DD`），值为当天活跃次数。
+
+**示例**：
+```json
+{
+  "year": 2026,
+  "total": 5,
+  "counts": {
+    "2026-03-01": 4,
+    "2026-03-02": 1
+  }
+}
+```
+
+---
+
+## 8. 全局搜索
+搜索全站的资源、帖子等内容，支持分页和多种筛选条件。
+
+- **端点**: `/api/search`
+- **方法**: `GET`
+- **查询参数**:
+
+| 参数 | 类型 | 说明 | 示例 |
+|------|------|------|------|
+| `q` | string | **搜索关键词**（URL 编码） | `%E4%BD%A0%E5%A5%BD` ("你好") |
+| `type` | string | 搜索类型：`all`(全部) / `resource`(资源) / `post`(帖子) 等 | `all` |
+| `boardId` | string | 板块ID过滤（可选） | 空 |
+| `platform` | string | 平台过滤：`java` / `bedrock` / `universal`（仅资源类型有效） | 空 |
+| `category` | string | 分类过滤（仅资源类型有效） | 空 |
+| `sort` | string | 排序方式：`relevance`(相关度) / `newest`(最新) / `popular`(热门) | `relevance` |
+| `page` | int | 页码（默认1） | `1` |
+
+- **返回**: `application/json`
+
+**返回结构**（当有结果时，`items` 数组包含具体条目；无结果时为空数组）：
+
+```json
+{
+  "items": [
+    {
+      // 具体字段取决于搜索结果的类型，可能包含标题、链接、摘要等
+    }
+  ],
+  "total": "int",
+  "matchedTags": [
+    "string"
+  ],
+  "pagination": {
+    "page": "int",
+    "pageSize": "int",
+    "total": "int",
+    "totalPages": "int"
+  }
+}
+```
+
+**字段说明**：
+- `items`：搜索结果数组（目前未捕获到有结果时的具体结构，需后续补充）。
+- `total`：总结果数。
+- `matchedTags`：匹配的标签（可用于筛选提示）。
+- `pagination`：分页信息。
+
+**示例**（无结果）：
+```json
+{
+  "items": [],
+  "total": 0,
+  "matchedTags": [],
+  "pagination": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 0,
+    "totalPages": 0
+  }
+}
+```
+
+---
+
+## 9. 论坛板块列表
+获取所有论坛板块的详细信息。
+
+- **端点**: `/api/posts/boards`
+- **方法**: `GET`
+- **参数**: 无
+- **返回**: `application/json`（直接返回板块数组）
+
+**返回结构**：
+
+```json
+[
+  {
+    "id": "string",
+    "name": "string",
+    "description": "string",
+    "icon": "string",
+    "color": "string",
+    "rules": "string",
+    "sortOrder": "int",
+    "postCount": "int",
+    "createdAt": "string (ISO 8601)",
+    "updatedAt": "string (ISO 8601)"
+  },
+  ...
+]
+```
+
+**字段说明**：
+- `id`：板块ID（数字或UUID）。
+- `name`：板块名称。
+- `description`：板块描述。
+- `icon`：图标标识（如 `mdi:forum`）。
+- `color`：主题色（十六进制）。
+- `rules`：板块规则（可能为空）。
+- `sortOrder`：排序顺序（数字越小越靠前）。
+- `postCount`：该板块下的帖子总数。
+- `createdAt`：创建时间。
+- `updatedAt`：更新时间。
+
+**示例**：见 [https://nexusmc.cn/api/posts/boards](https://nexusmc.cn/api/posts/boards)
+
+---
+
+## 10. 站点设置
+获取站点的全局配置参数。
+
+- **端点**: `/api/site-settings`
+- **方法**: `GET`
+- **参数**: 无
+- **返回**: `application/json`
+
+**返回结构**（所有字段值均为字符串，部分为 JSON 字符串）：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `cookie-enabled` | string | `"true"`/`"false"` 是否启用 Cookie 提示 |
+| `cookie-text` | string | Cookie 提示文案 |
+| `cookie-privacy-url` | string | 隐私政策链接 |
+| `cookie-accept-text` | string | 接受按钮文字 |
+| `cookie-reject-text` | string | 拒绝按钮文字 |
+| `maintenance-enabled` | string | `"true"`/`"false"` 是否开启维护模式 |
+| `maintenance-title` | string | 维护模式标题 |
+| `maintenance-message` | string | 维护模式提示信息 |
+| `maintenance-countdown` | string | `"true"`/`"false"` 是否显示倒计时 |
+| `maintenance-end-time` | string | 维护结束时间（可能为空） |
+| `register-mode` | string | 注册模式：`open` / `invite` / `closed` |
+| `passkey-enabled` | string | `"true"`/`"false"` 是否启用通行密钥 |
+| `site-subtitle` | string | 站点副标题/口号 |
+| `register-email-verify` | string | `"true"`/`"false"` 注册是否需要邮箱验证 |
+| `site-favicon` | string | 网站图标路径 |
+| `register-show-email-optin` | string | `"true"`/`"false"` 是否显示邮件订阅选项 |
+| `register-show-terms` | string | `"true"`/`"false"` 是否显示服务条款勾选框 |
+| `register-terms-url` | string | 服务条款链接 |
+| `site-announcement-link` | string | 公告详情链接 |
+| `footer-text` | string | 底部版权信息 |
+| `footer-icp` | string | ICP 备案号（可能为空） |
+| `footer-links` | string | JSON数组，底部链接，格式 `[{"name":"关于我们","url":"/p/about"}]` |
+| `register-privacy-url` | string | 隐私政策链接 |
+| `footer-powered` | string | Powered by 信息（含 HTML 标签） |
+| `register-captcha` | string | `"true"`/`"false"` 注册是否需要验证码 |
+| `login-captcha` | string | `"true"`/`"false"` 登录是否需要验证码 |
+| `password-captcha` | string | `"true"`/`"false"` 修改密码是否需要验证码 |
+| `email-change-captcha` | string | `"true"`/`"false"` 修改邮箱是否需要验证码 |
+| `reset-password-captcha` | string | `"true"`/`"false"` 重置密码是否需要验证码 |
+| `oauth-captcha` | string | `"true"`/`"false"` OAuth 登录是否需要验证码 |
+| `theme-hue` | string | 主题色色调（如 "217"） |
+| `custom-css` | string | 自定义 CSS（可能为空） |
+| `site-name` | string | 站点名称 |
+| `site-logo` | string | Logo 图片路径 |
+| `seo-keywords` | string | SEO 关键词 |
+| `seo-google-verification` | string | Google 验证代码 |
+| `seo-bing-verification` | string | Bing 验证代码 |
+| `site-notices` | string | JSON数组，站点通知 |
+| `seo-title-template` | string | 标题模板（可能为空） |
+| `seo-baidu-verification` | string | 百度验证代码 |
+| `seo-description` | string | SEO 描述 |
+| `twofactor-require-password-login` | string | `"true"`/`"false"` 密码登录是否需要二步验证 |
+| `twofactor-require-oauth-login` | string | `"true"`/`"false"` OAuth 登录是否需要二步验证 |
+| `twofactor-require-passkey-login` | string | `"true"`/`"false"` 通行密钥登录是否需要二步验证 |
+| `site-announcement` | string | 站点公告内容 |
+| `mc-tips` | string | Minecraft 小贴士（多行文本，用换行分隔） |
+
+**示例**：见 [https://nexusmc.cn/api/site-settings](https://nexusmc.cn/api/site-settings)
+
+---
+
+**文档版本**: 1.2 (最后更新 2026-03-03-20:53)  
+**整理者**: [Rpg636zjhi](https://github.com/rpg636zjhi)
+## 许可证
+
+本文档采用 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) 许可协议，转载请注明出处。
