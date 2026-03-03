@@ -591,8 +591,8 @@
 
 ---
 
-**文档版本**: 1.2 (最后更新 2026-03-03-20:53)  
-**整理者**: [Rpg636zjhi](https://github.com/rpg636zjhi)
+**文档最后更新**: 2026-03-03-20:53
+**整理者**: [rpg636zjhi](https://github.com/rpg636zjhi)
 ## 许可证
-
 本文档采用 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) 许可协议，转载请注明出处。
+
