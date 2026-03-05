@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="logo.png" alt="NexusMC Logo" width="400"/>
+    <img src="logo.png" alt="NexusMC-API Logo" width="400"/>
 </p>
 
 # NexusMC API 文档（非官方）
